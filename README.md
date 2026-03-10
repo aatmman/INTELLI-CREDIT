@@ -4,7 +4,6 @@
   <img src="https://img.shields.io/badge/React-18-blue?style=flat-square&logo=react" alt="React">
   <img src="https://img.shields.io/badge/FastAPI-0.115-teal?style=flat-square&logo=fastapi" alt="FastAPI">
   <img src="https://img.shields.io/badge/XGBoost-AUC%200.91-orange?style=flat-square" alt="XGBoost">
-  <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="License">
 </p>
 
 # Intelli-Credit
