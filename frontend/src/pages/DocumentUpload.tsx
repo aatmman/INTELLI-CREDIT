@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth, getRoleLabel } from "@/lib/auth";
-import { useUploadDocument } from "@/hooks/useApi";
+import { useUploadDocument, useDocuments, useDocumentChecklist } from "@/hooks/useApi";
 import { FileText, BarChart3, Upload, Trash2, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -75,13 +75,40 @@ export default function DocumentUpload() {
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null);
   const navigate = useNavigate();
   const { userName, role } = useAuth();
-  const docs = tabsData[activeTab];
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadMutation = useUploadDocument();
 
-  const totalDocs = Object.values(tabsData).flat().length;
-  const uploadedDocs = Object.values(tabsData).flat().filter(d => d.status === "uploaded" || d.status === "processing").length;
-  const completeness = Math.round((uploadedDocs / totalDocs) * 100);
+  // Application ID placeholder for the UI demo since there's no URL param
+  const applicationId = "APP-TEST-001";
+
+  const uploadMutation = useUploadDocument();
+  const { data: documentsData, isLoading } = useDocuments(applicationId);
+
+  // Merge uploaded documents with the static required checklist structure
+  const uploadedDocsList = documentsData?.data || [];
+
+  const derivedTabsData: Record<string, DocItem[]> = {};
+  for (const [tabName, requiredDocs] of Object.entries(tabsData)) {
+    derivedTabsData[tabName] = requiredDocs.map(reqDoc => {
+      // Find matching uploaded document
+      const uploadedMatch = uploadedDocsList.find((d: any) => d.document_type === reqDoc.name);
+
+      if (uploadedMatch) {
+        return {
+          ...reqDoc,
+          status: uploadedMatch.status === "parsed" || uploadedMatch.status === "verified" ? "uploaded" : "processing",
+          extracted: uploadedMatch.status === "parsed" ? "Data Extracted ✅" : undefined,
+          fileName: uploadedMatch.file_name,
+        };
+      }
+      return { ...reqDoc, status: "empty" } as DocItem;
+    });
+  }
+
+  const docs = derivedTabsData[activeTab] || [];
+
+  const totalDocs = Object.values(derivedTabsData).flat().length;
+  const uploadedCount = Object.values(derivedTabsData).flat().filter(d => d.status === "uploaded" || d.status === "processing").length;
+  const completeness = Math.round((uploadedCount / totalDocs) * 100);
 
   const handleUpload = async (docName: string) => {
     setUploadingDocType(docName);
@@ -136,7 +163,7 @@ export default function DocumentUpload() {
               <div className="progress-fill" style={{ width: `${completeness}%` }} />
             </div>
             <p className="font-mono text-[10px] text-muted-foreground tracking-wider mt-1">
-              {uploadedDocs}/{totalDocs} UPLOADED
+              {uploadedCount}/{totalDocs} UPLOADED
             </p>
           </div>
         </div>
@@ -144,7 +171,7 @@ export default function DocumentUpload() {
         {/* Tabs */}
         <div className="tab-bar mb-6">
           {tabs.map((tab) => {
-            const tabDocs = tabsData[tab];
+            const tabDocs = derivedTabsData[tab];
             const tabUploaded = tabDocs.filter(d => d.status !== "empty").length;
             return (
               <button
@@ -175,7 +202,12 @@ export default function DocumentUpload() {
 
         {/* Documents */}
         <div className="space-y-3">
-          {docs.map((doc) => (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-sm">Loading documents...</p>
+            </div>
+          ) : docs.map((doc) => (
             <div
               key={doc.name}
               className={`glass-card transition-all ${doc.status === "empty" ? "border-dashed" : ""
