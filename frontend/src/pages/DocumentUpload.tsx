@@ -78,7 +78,8 @@ export default function DocumentUpload() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Application ID placeholder for the UI demo since there's no URL param
-  const applicationId = "APP-TEST-001";
+  // Must be a valid UUID for Supabase backend
+  const applicationId = "5b62b322-26f6-498c-84d4-539c94b7c8df";
 
   const uploadMutation = useUploadDocument();
   const { data: documentsData, isLoading } = useDocuments(applicationId);
@@ -120,7 +121,8 @@ export default function DocumentUpload() {
     if (!file || !uploadingDocType) return;
 
     // Application ID placeholder for the UI demo since there's no URL param
-    const applicationId = "APP-TEST-001";
+    // Must be a valid UUID for Supabase backend
+    const applicationId = "5b62b322-26f6-498c-84d4-539c94b7c8df";
 
     const formData = new FormData();
     formData.append("file", file);
