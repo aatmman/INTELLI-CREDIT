@@ -1,0 +1,184 @@
+# Intelli-Credit Frontend Redesign — Professional Banking SaaS UI
+
+Complete rewrite of the frontend to create a professional, consistent SaaS banking application. Fixes dual-navigation inconsistency, removes all hardcoded static data, connects every page to the FastAPI backend, and applies a distinctive "Institutional Dark" design direction.
+
+## User Review Required
+
+> [!IMPORTANT]
+> This is a **full frontend rewrite** of all 12 pages. The existing Lovable-generated code will be replaced with manually crafted professional components. All ShadCN/Radix primitives are kept but re-styled.
+
+> [!WARNING]
+> The backend API endpoints return demo/mock data when Supabase is not connected. The frontend will be wired correctly to all endpoints — actual data flow depends on the backend being running.
+
+---
+
+## Design Direction
+
+**Aesthetic:** *Institutional Dark* — Inspired by Bloomberg Terminal meets modern fintech (Stripe Dashboard, Ramp).
+
+**DFII Score: 12/15** (Impact: 4, Fit: 5, Feasibility: 4, Performance: 4, Consistency Risk: 5 → low)
+
+**Differentiation Anchor:** Deep navy `#0A0F1C` sidebar with luminous teal `#00D4AA` accent — no app will look like this by accident.
+
+### Design System
+
+| Token | Value | Rationale |
+|---|---|---|
+| **Font — Display** | `Space Grotesk` (Google Fonts) | Geometric, modern, distinctly non-generic |
+| **Font — Body** | `DM Sans` (Google Fonts) | Clean, professional readability |
+| **Primary bg** | `#0A0F1C` (deep navy) | Institutional authority |
+| **Primary accent** | `#00D4AA` (luminous teal) | Action/success signals |
+| **Danger** | `#FF4D6A` | Clear risk/rejection signal |
+| **Warning** | `#FFB020` | Amber alerts |
+| **Surface** | `#111827` | Card backgrounds |
+| **Border** | `#1E293B` | Subtle separation |
+| **Text primary** | `#F1F5F9` | High contrast on dark |
+| **Text muted** | `#64748B` | Secondary information |
+
+### Navigation Architecture (Consistency Fix)
+**ALL pages use one consistent layout:** Top navigation bar only. No left sidebar. This eliminates the dual-navigation problem.
+
+- **Login page** → Full-screen split layout (no nav)
+- **All dashboard/portal pages** → `DashboardLayout` with:
+  - Fixed top navbar: Logo | Page nav tabs | Search | Notifications | User avatar
+  - Content area below
+
+---
+
+## Proposed Changes
+
+### Design System Foundation
+
+#### [MODIFY] [index.css](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/index.css)
+- Replace all CSS variables with the new Institutional Dark palette
+- Add `@import` for Space Grotesk and DM Sans fonts
+- Add custom utility classes for glass cards, glow effects, status pills
+
+#### [MODIFY] [tailwind.config.ts](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/tailwind.config.ts)
+- Update theme extensions to match new design tokens
+- Add custom animation classes
+
+#### [MODIFY] [index.html](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/index.html)
+- Add Google Fonts links for Space Grotesk and DM Sans
+
+---
+
+### Shared Components
+
+#### [NEW] [DashboardLayout.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/components/DashboardLayout.tsx)
+- Unified layout wrapper with top navbar (logo, nav tabs, search, notifications, user)
+- Accepts `role`, `navItems`, `children` props
+- Replaces [RoleSidebar](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/components/RoleSidebar.tsx#17-59) component usage everywhere
+
+#### [MODIFY] [StatCard.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/components/StatCard.tsx)
+- Restyle with glass morphism card, luminous accent values
+
+#### [MODIFY] [StatusBadge.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/components/StatusBadge.tsx)
+- Restyle with glow-dot indicators, matching new color system
+
+#### [DELETE] [RoleSidebar.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/components/RoleSidebar.tsx)
+- Removed — replaced by `DashboardLayout` top navbar pattern
+
+---
+
+### API Integration Layer
+
+#### [MODIFY] [api.ts](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/lib/api.ts)
+- Add TypeScript interfaces for all request/response types
+- Better error handling with typed errors
+
+#### [NEW] [useAuth.ts](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/hooks/useAuth.ts)
+- Auth context/provider for managing login state and token
+- Stores role selection for demo mode
+
+#### [NEW] [useApi.ts](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/hooks/useApi.ts)
+- React Query hooks wrapping every API endpoint
+- `useApplications()`, `usePreQual()`, `useDocuments()`, etc.
+
+---
+
+### Page Rewrites (All 10 pages)
+
+Every page is rewritten to:
+1. Use `DashboardLayout` for consistent nav
+2. Call real backend APIs via React Query hooks
+3. Show loading/error states
+4. Apply the Institutional Dark design system
+
+#### [MODIFY] [LoginPage.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/pages/LoginPage.tsx)
+- Dark left panel with animated brand elements
+- Clean right panel login form with role selector
+- Connects to auth context on submit
+
+#### [MODIFY] [BorrowerDashboard.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/pages/BorrowerDashboard.tsx)
+- **API:** `applications.list()` — shows borrower's applications
+- Step progress tracker for active application
+- Quick action cards (Upload Documents, Check Status)
+
+#### [MODIFY] [PreQualForm.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/pages/PreQualForm.tsx)
+- **API:** `preQual.check()` on submit, `preQual.getSectorWeights()` for sector list
+- Multi-step form with progress indicator
+- Result modal showing eligibility tier
+
+#### [MODIFY] [DocumentUpload.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/pages/DocumentUpload.tsx)
+- **API:** `documents.upload()`, `documents.list()`, `documents.getCompleteness()`, `documents.getChecklist()`
+- Drag-drop upload zones by category tabs
+- Real-time processing status indicators
+
+#### [MODIFY] [RMDashboard.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/pages/RMDashboard.tsx)
+- **API:** `applications.list()` — filtered by RM role
+- Stats grid with trend indicators
+- Data table with sorting, filtering, pagination connected to API params
+
+#### [MODIFY] [RMApplicationReview.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/pages/RMApplicationReview.tsx)
+- **API:** `applications.get()`, `documents.list()`, `documents.getCompleteness()`
+- Company snapshot card, risk signals, pre-qual score
+- Action buttons: Submit Final Call, Download PDF
+
+#### [MODIFY] [AnalysisWorkspace.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/pages/AnalysisWorkspace.tsx)
+- **API:** `analysis.getFinancial()`, `analysis.getGST()`, `analysis.getBanking()`, `analysis.getResearch()`, `analysis.getRiskTimeline()`, `analysis.runWhatIf()`, `cam.generate()`, `cam.get()`
+- 6-tab workspace (Financials, GST/Banking, Research, Timeline, CAM, What-If)
+- Financial metrics table, key ratio cards, anomaly alerts
+
+#### [MODIFY] [FieldVisitForm.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/pages/FieldVisitForm.tsx)
+- **API:** `fieldVisit.submit()`, `fieldVisit.get()`
+- 4-section form: Site Details, Operational, Management, Observations
+- Capacity slider, condition selector cards
+
+#### [MODIFY] [CreditManagerDecision.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/pages/CreditManagerDecision.tsx)
+- **API:** `riskScore.get()`, `riskScore.getPolicyChecks()`, `decisions.submit()`, `cam.get()`, `cam.download()`
+- Risk grade gauge, SHAP explainability bars, policy checklist
+- Decision actions: Approve / Reject / Request Info
+
+#### [MODIFY] [SanctioningDecision.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/pages/SanctioningDecision.tsx)
+- **API:** `decisions.getDecisionPack()`, `decisions.submit()`, `decisions.generateSanctionLetter()`
+- Executive summary with financial KPIs
+- Company profile card, strengths/risks lists
+- Final action bar: Return / Reject / Approve
+
+#### [MODIFY] [App.tsx](file:///c:/Users/Aatmman%20C%20Patil/Desktop/INTELLI-CREDIT/intelli-credit-hub-main/src/App.tsx)
+- Wrap with `AuthProvider`
+- Keep all existing routes
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- **Build check:** `cd c:\Users\Aatmman C Patil\Desktop\INTELLI-CREDIT\intelli-credit-hub-main && npm run build`
+  - Must complete with zero errors
+
+### Browser Verification
+- Launch dev server: `cd c:\Users\Aatmman C Patil\Desktop\INTELLI-CREDIT\intelli-credit-hub-main && npm run dev`
+- Navigate through all pages using browser tool:
+  1. `/auth/login` — verify dark theme, role selector works
+  2. `/borrower` — verify consistent top nav, API calls attempted
+  3. `/borrower/pre-qual` — verify form renders
+  4. `/borrower/apply` — verify upload zone
+  5. `/rm` — verify dashboard table, consistent nav
+  6. `/rm/APP-2490` — verify review page
+  7. `/analyst/ACME-8821` — verify 6-tab workspace
+  8. `/analyst/ACME-8821/field-visit` — verify form
+  9. `/credit-manager/ACME-8821` — verify decision pack
+  10. `/sanctioning/ACME-8821` — verify final decision page
+- **Key check:** NO page should have a left sidebar. All pages use top nav only.

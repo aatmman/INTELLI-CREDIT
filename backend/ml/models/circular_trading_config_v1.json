@@ -1,0 +1,26 @@
+{
+  "model": "IsolationForest",
+  "version": "v1",
+  "features": [
+    "gst_turnover_growth",
+    "pat_growth",
+    "debtor_days",
+    "gst_bank_ratio",
+    "itc_utilization",
+    "gstr_mismatch_pct",
+    "reversal_frequency",
+    "margin_consistency"
+  ],
+  "feature_count": 8,
+  "contamination": 0.25,
+  "performance": {
+    "accuracy": 0.998,
+    "auc_roc": 1.0
+  },
+  "score_interpretation": {
+    "0_to_30": "Low fraud risk",
+    "30_to_60": "Medium fraud risk",
+    "60_to_80": "High fraud risk",
+    "80_to_100": "Critical \u2014 likely circular trading"
+  }
+}

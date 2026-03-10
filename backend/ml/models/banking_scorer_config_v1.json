@@ -1,0 +1,27 @@
+{
+  "model": "LogisticRegression",
+  "version": "v1",
+  "features": [
+    "bounce_frequency",
+    "bounce_amount_ratio",
+    "cash_withdrawal_ratio",
+    "emi_burden_ratio",
+    "balance_volatility",
+    "window_dressing_score",
+    "credit_concentration",
+    "account_age_ratio",
+    "monthly_active_days",
+    "debit_credit_ratio"
+  ],
+  "feature_count": 10,
+  "performance": {
+    "accuracy": 1.0,
+    "auc_roc": 1.0
+  },
+  "score_interpretation": {
+    "80_to_100": "Healthy banking conduct",
+    "60_to_80": "Acceptable conduct",
+    "40_to_60": "Moderate stress signals",
+    "0_to_40": "Critical stress \u2014 high risk"
+  }
+}
