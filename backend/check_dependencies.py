@@ -41,10 +41,8 @@ REQUIRED_PACKAGES: List[Tuple[str, str, str]] = [
     # Web Research
     ("tavily", "tavily-python", "Research nodes"),
 
-    # Document Parsing
+    # Document Parsing (docling/easyocr omitted — too heavy for Railway, PyMuPDF is sufficient)
     ("fitz", "PyMuPDF", "Document parsing"),
-    ("docling", "docling", "Document parsing (primary)"),
-    ("easyocr", "easyocr", "Document parsing (OCR fallback)"),
 
     # Document Generation
     ("docx", "python-docx", "CAM/Sanction letter"),
