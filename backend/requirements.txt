@@ -11,7 +11,6 @@ pydantic-settings==2.5.0
 
 # --- Database & Storage ---
 supabase==2.7.0
-postgrest==0.17.0
 
 # --- Authentication ---
 firebase-admin==6.5.0
