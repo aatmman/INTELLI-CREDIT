@@ -4,6 +4,7 @@ import { useAuth, getRoleLabel } from "@/lib/auth";
 import { useUploadDocument } from "@/hooks/useApi";
 import { FileText, BarChart3, Upload, Trash2, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const NAV = [
   { label: "Dashboard", path: "/borrower" },
@@ -71,6 +72,7 @@ const tabs = Object.keys(tabsData);
 
 export default function DocumentUpload() {
   const [activeTab, setActiveTab] = useState("Financials");
+  const [uploadingDocType, setUploadingDocType] = useState<string | null>(null);
   const navigate = useNavigate();
   const { userName, role } = useAuth();
   const docs = tabsData[activeTab];
@@ -81,8 +83,37 @@ export default function DocumentUpload() {
   const uploadedDocs = Object.values(tabsData).flat().filter(d => d.status === "uploaded" || d.status === "processing").length;
   const completeness = Math.round((uploadedDocs / totalDocs) * 100);
 
-  const handleUpload = async (_docName: string) => {
+  const handleUpload = async (docName: string) => {
+    setUploadingDocType(docName);
     fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadingDocType) return;
+
+    // Application ID placeholder for the UI demo since there's no URL param
+    const applicationId = "APP-TEST-001";
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("application_id", applicationId);
+    formData.append("document_type", uploadingDocType);
+
+    const toastId = toast.loading(`Uploading ${uploadingDocType}...`);
+
+    uploadMutation.mutate(formData, {
+      onSuccess: () => {
+        toast.success(`${uploadingDocType} uploaded successfully!`, { id: toastId });
+      },
+      onError: (err) => {
+        toast.error(`Failed to upload ${uploadingDocType}`, { id: toastId });
+      },
+      onSettled: () => {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        setUploadingDocType(null);
+      }
+    });
   };
 
   return (
@@ -123,9 +154,8 @@ export default function DocumentUpload() {
               >
                 {tab}
                 <span
-                  className={`ml-1.5 font-mono text-[9px] px-1.5 py-0.5 rounded-[2px] ${
-                    tabUploaded === tabDocs.length ? "badge-success" : "badge-neutral"
-                  }`}
+                  className={`ml-1.5 font-mono text-[9px] px-1.5 py-0.5 rounded-[2px] ${tabUploaded === tabDocs.length ? "badge-success" : "badge-neutral"
+                    }`}
                 >
                   {tabUploaded}/{tabDocs.length}
                 </span>
@@ -135,16 +165,21 @@ export default function DocumentUpload() {
         </div>
 
         {/* Hidden file input */}
-        <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.jpg,.png,.xlsx,.csv" />
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept=".pdf,.jpg,.png,.xlsx,.csv"
+          onChange={handleFileChange}
+        />
 
         {/* Documents */}
         <div className="space-y-3">
           {docs.map((doc) => (
             <div
               key={doc.name}
-              className={`glass-card transition-all ${
-                doc.status === "empty" ? "border-dashed" : ""
-              }`}
+              className={`glass-card transition-all ${doc.status === "empty" ? "border-dashed" : ""
+                }`}
             >
               {doc.status === "uploaded" && (
                 <div className="flex items-start justify-between">
