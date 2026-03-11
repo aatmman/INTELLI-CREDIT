@@ -40,7 +40,7 @@ def _fetch_application(application_id: str) -> Dict[str, Any]:
     """Fetch application data."""
     try:
         supabase = get_supabase()
-        result = supabase.table("loan_applications").select("*").eq(
+        result = supabase.table("applications").select("*").eq(
             "id", application_id
         ).single().execute()
         return result.data or {}

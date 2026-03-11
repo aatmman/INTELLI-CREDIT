@@ -322,12 +322,12 @@ def _extract_insurance(text: str) -> Dict[str, Any]:
 # ═══════════════════════════════════════════════════════════════════════════
 
 def _fetch_loan_amount(application_id: str) -> Optional[float]:
-    """Fetch loan amount from loan_applications table."""
+    """Fetch loan amount from applications table."""
     if not get_supabase:
         return None
     try:
         supabase = get_supabase()
-        result = supabase.table("loan_applications").select(
+        result = supabase.table("applications").select(
             "loan_amount_requested"
         ).eq("id", application_id).single().execute()
         if result.data:

@@ -90,6 +90,11 @@ async def root():
     }
 
 
+@app.get("/ping", tags=["Health"])
+async def ping():
+    return {"status": "pong", "message": "Backend is awake!"}
+
+
 @app.get("/health", tags=["Health"])
 async def health_check():
     from ml.model_loader import model_registry

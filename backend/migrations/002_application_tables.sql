@@ -4,9 +4,9 @@
 -- ========================================
 
 -- ========================================
--- 1. loan_applications (Core)
+-- 1. applications (Core)
 -- ========================================
-CREATE TABLE IF NOT EXISTS loan_applications (
+CREATE TABLE IF NOT EXISTS applications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     company_name VARCHAR(300) NOT NULL,
     cin_number VARCHAR(30),
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS loan_applications (
 -- ========================================
 CREATE TABLE IF NOT EXISTS documents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    application_id UUID NOT NULL REFERENCES loan_applications(id) ON DELETE CASCADE,
+    application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
     document_type VARCHAR(50) NOT NULL,
     file_name VARCHAR(500) NOT NULL,
     file_url TEXT NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS documents (
 -- ========================================
 CREATE TABLE IF NOT EXISTS extracted_financials (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    application_id UUID NOT NULL REFERENCES loan_applications(id) ON DELETE CASCADE,
+    application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
     financial_year VARCHAR(10) NOT NULL,
     total_revenue DECIMAL(15,2),
     cost_of_goods DECIMAL(15,2),
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS extracted_financials (
 -- ========================================
 CREATE TABLE IF NOT EXISTS gst_monthly_data (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    application_id UUID NOT NULL REFERENCES loan_applications(id) ON DELETE CASCADE,
+    application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
     month VARCHAR(7) NOT NULL,
     gstr3b_turnover DECIMAL(15,2),
     gstr1_turnover DECIMAL(15,2),
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS gst_monthly_data (
 -- ========================================
 CREATE TABLE IF NOT EXISTS bank_statement_data (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    application_id UUID NOT NULL REFERENCES loan_applications(id) ON DELETE CASCADE,
+    application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
     month VARCHAR(7) NOT NULL,
     bank_name VARCHAR(100),
     account_number VARCHAR(30),
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS bank_statement_data (
 -- ========================================
 CREATE TABLE IF NOT EXISTS field_visit_notes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    application_id UUID NOT NULL REFERENCES loan_applications(id) ON DELETE CASCADE,
+    application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
     visit_date TIMESTAMPTZ NOT NULL,
     visited_by VARCHAR(200),
     capacity_utilization_percent DECIMAL(5,2),
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS field_visit_notes (
 -- ========================================
 CREATE TABLE IF NOT EXISTS research_findings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    application_id UUID NOT NULL REFERENCES loan_applications(id) ON DELETE CASCADE,
+    application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
     source VARCHAR(30) NOT NULL,
     title VARCHAR(500) NOT NULL,
     summary TEXT,
@@ -185,7 +185,7 @@ CREATE TABLE IF NOT EXISTS research_findings (
 -- ========================================
 CREATE TABLE IF NOT EXISTS risk_scores (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    application_id UUID NOT NULL UNIQUE REFERENCES loan_applications(id) ON DELETE CASCADE,
+    application_id UUID NOT NULL UNIQUE REFERENCES applications(id) ON DELETE CASCADE,
     pre_qual_score DECIMAL(6,2),
     financial_score DECIMAL(6,2),
     gst_score DECIMAL(6,2),
@@ -214,7 +214,7 @@ CREATE TABLE IF NOT EXISTS risk_scores (
 -- ========================================
 CREATE TABLE IF NOT EXISTS loan_decisions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    application_id UUID NOT NULL REFERENCES loan_applications(id) ON DELETE CASCADE,
+    application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
     action VARCHAR(40) NOT NULL,
     decided_by VARCHAR(200) NOT NULL,
     decided_by_role VARCHAR(30) NOT NULL,
@@ -234,7 +234,7 @@ CREATE TABLE IF NOT EXISTS loan_decisions (
 -- ========================================
 CREATE TABLE IF NOT EXISTS cam_documents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    application_id UUID NOT NULL REFERENCES loan_applications(id) ON DELETE CASCADE,
+    application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
     status VARCHAR(20) DEFAULT 'generating',
     cam_content JSONB DEFAULT '{}',
     cam_narrative TEXT,
@@ -267,7 +267,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 -- ========================================
 CREATE TABLE IF NOT EXISTS agent_progress (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    application_id UUID NOT NULL REFERENCES loan_applications(id) ON DELETE CASCADE,
+    application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
     agent_name VARCHAR(100) NOT NULL,
     status VARCHAR(20) DEFAULT 'pending',
     progress_percent DECIMAL(5,2) DEFAULT 0,
@@ -280,12 +280,12 @@ CREATE TABLE IF NOT EXISTS agent_progress (
 -- ========================================
 -- Indexes
 -- ========================================
-CREATE INDEX IF NOT EXISTS idx_loan_apps_borrower ON loan_applications(borrower_uid);
-CREATE INDEX IF NOT EXISTS idx_loan_apps_stage ON loan_applications(current_stage);
-CREATE INDEX IF NOT EXISTS idx_loan_apps_rm ON loan_applications(assigned_rm);
-CREATE INDEX IF NOT EXISTS idx_loan_apps_analyst ON loan_applications(assigned_analyst);
-CREATE INDEX IF NOT EXISTS idx_loan_apps_cm ON loan_applications(assigned_cm);
-CREATE INDEX IF NOT EXISTS idx_loan_apps_active ON loan_applications(is_active);
+CREATE INDEX IF NOT EXISTS idx_loan_apps_borrower ON applications(borrower_uid);
+CREATE INDEX IF NOT EXISTS idx_loan_apps_stage ON applications(current_stage);
+CREATE INDEX IF NOT EXISTS idx_loan_apps_rm ON applications(assigned_rm);
+CREATE INDEX IF NOT EXISTS idx_loan_apps_analyst ON applications(assigned_analyst);
+CREATE INDEX IF NOT EXISTS idx_loan_apps_cm ON applications(assigned_cm);
+CREATE INDEX IF NOT EXISTS idx_loan_apps_active ON applications(is_active);
 
 CREATE INDEX IF NOT EXISTS idx_documents_app ON documents(application_id);
 CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(status);
@@ -318,7 +318,7 @@ CREATE INDEX IF NOT EXISTS idx_agent_progress_app ON agent_progress(application_
 -- ========================================
 -- Enable RLS on all application tables
 -- ========================================
-ALTER TABLE loan_applications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE extracted_financials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gst_monthly_data ENABLE ROW LEVEL SECURITY;
@@ -332,7 +332,7 @@ ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_progress ENABLE ROW LEVEL SECURITY;
 
 -- Service role bypass (for backend using service_role_key)
-CREATE POLICY "Service role full access" ON loan_applications FOR ALL USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY "Service role full access" ON applications FOR ALL USING (TRUE) WITH CHECK (TRUE);
 CREATE POLICY "Service role full access" ON documents FOR ALL USING (TRUE) WITH CHECK (TRUE);
 CREATE POLICY "Service role full access" ON extracted_financials FOR ALL USING (TRUE) WITH CHECK (TRUE);
 CREATE POLICY "Service role full access" ON gst_monthly_data FOR ALL USING (TRUE) WITH CHECK (TRUE);

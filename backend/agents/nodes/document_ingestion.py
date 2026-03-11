@@ -48,10 +48,10 @@ def _fetch_application_docs(application_id: str) -> List[Dict[str, Any]]:
 
 
 def _fetch_application_info(application_id: str) -> Dict[str, Any]:
-    """Fetch application metadata from loan_applications table."""
+    """Fetch application metadata from applications table."""
     try:
         supabase = get_supabase()
-        result = supabase.table("loan_applications").select(
+        result = supabase.table("applications").select(
             "loan_type, sector, company_name, pan_number, cin_number, "
             "annual_turnover, loan_amount_requested"
         ).eq("id", application_id).single().execute()

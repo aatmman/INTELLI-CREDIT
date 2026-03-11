@@ -92,7 +92,7 @@ export const applications = {
 // DOCUMENTS (Stage 1)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export const documents = {
-    upload: (formData: FormData) => post("/api/documents", formData),
+    upload: (formData: FormData) => post("/api/documents/upload", formData),
     list: (applicationId: string) => get(`/api/documents/${applicationId}`),
     getStatus: (documentId: string) => get(`/api/documents/status/${documentId}`),
     getCompleteness: (applicationId: string) => get(`/api/documents/${applicationId}/completeness`),
