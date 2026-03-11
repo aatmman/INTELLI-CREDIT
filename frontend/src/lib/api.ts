@@ -100,7 +100,7 @@ export const applications = {
 export const documents = {
     upload: (formData: FormData) => post("/api/documents/upload", formData),
     list: (applicationId: string) => get(`/api/documents/${applicationId}`),
-    getStatus: (documentId: string) => get(`/api/documents/status/${documentId}`),
+    getStatus: (documentId: string) => get(`/api/documents/${documentId}/status`),
     getCompleteness: (applicationId: string) => get(`/api/documents/${applicationId}/completeness`),
     verify: (data: any) => patch("/api/documents/verify", data),
     getChecklist: (loanType: string) => get(`/api/documents/checklist/${loanType}`),
@@ -125,9 +125,9 @@ export const analysis = {
     getBanking: (appId: string) => get(`/api/analysis/${appId}/banking`),
     getResearch: (appId: string) => get(`/api/analysis/${appId}/research`),
     triggerResearch: (appId: string) => post(`/api/analysis/${appId}/research/trigger`),
-    getRiskTimeline: (appId: string) => get(`/api/analysis/${appId}/risk-timeline`),
+    getRiskTimeline: (appId: string) => get(`/api/analysis/${appId}/timeline`),
     runWhatIf: (appId: string, data: any) => post(`/api/analysis/${appId}/what-if`, data),
-    triggerFullAnalysis: (appId: string) => post(`/api/analysis/${appId}/run-full`),
+    triggerFullAnalysis: (appId: string) => post(`/api/analysis/${appId}/run-all`),
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

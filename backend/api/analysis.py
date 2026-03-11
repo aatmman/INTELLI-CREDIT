@@ -35,7 +35,7 @@ async def get_financial_analysis(
         ).order("financial_year", desc=False).execute()
         
         # Get sector benchmarks for comparison
-        app = supabase.table("applications").select("sector").eq(
+        app = supabase.table("loan_applications").select("sector").eq(
             "id", application_id
         ).single().execute()
         
@@ -181,9 +181,40 @@ async def trigger_research(
 
 
 async def run_research_agent(application_id: str):
-    """Background: Run research agent subgraph. Stub for LangGraph integration."""
-    # TODO: Replace with actual agents/nodes/research/ calls
-    pass
+    """Background: Run research agent subgraph."""
+    try:
+        import asyncio
+        from agents.nodes.research.company_news import company_news_node
+        from agents.nodes.research.mca_check import mca_check_node
+        from agents.nodes.research.ecourts_check import ecourts_check_node
+        from agents.nodes.research.sector_research import sector_research_node
+        from agents.nodes.research.rbi_list_check import rbi_list_check_node
+        from agents.nodes.research.aggregator import research_aggregator_node
+
+        state = {"application_id": application_id}
+        
+        # Run parallel nodes
+        results = await asyncio.gather(
+            company_news_node(state.copy()),
+            mca_check_node(state.copy()),
+            ecourts_check_node(state.copy()),
+            sector_research_node(state.copy()),
+            rbi_list_check_node(state.copy()),
+            return_exceptions=True
+        )
+
+        merged_state = {"application_id": application_id}
+        for res in results:
+            if isinstance(res, dict):
+                merged_state.update(res)
+            else:
+                print(f"[Research] Node yielded exception: {res}")
+
+        # Run aggregator
+        await research_aggregator_node(merged_state)
+        print(f"[Research] Completed research agent for {application_id}")
+    except Exception as e:
+        print(f"[ERROR] Research agent failed: {e}")
 
 
 # --- Tab 4: Risk Timeline (DIFFERENTIATOR) ---
@@ -269,6 +300,9 @@ async def trigger_full_analysis(
 
 
 async def run_full_analysis_pipeline(application_id: str):
-    """Background: Run the full CreditAppraisalGraph. Stub for LangGraph integration."""
-    # TODO: Replace with actual agents/graph.py execution
-    pass
+    """Background: Run the full CreditAppraisalGraph."""
+    try:
+        from agents.graph import run_graph
+        await run_graph(application_id)
+    except Exception as e:
+        print(f"[ERROR] Full analysis pipeline failed: {e}")

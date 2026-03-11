@@ -416,7 +416,7 @@ def _update_existing_loans(application_id: str, sanction_data: Dict) -> None:
     try:
         supabase = get_supabase()
         # Fetch current existing_loans_detail
-        result = supabase.table("applications").select(
+        result = supabase.table("loan_applications").select(
             "existing_loans_detail"
         ).eq("id", application_id).single().execute()
 
@@ -434,7 +434,7 @@ def _update_existing_loans(application_id: str, sanction_data: Dict) -> None:
             "sanction_date": sanction_data.get("sanction_date"),
         })
 
-        supabase.table("applications").update({
+        supabase.table("loan_applications").update({
             "existing_loans_detail": current,
         }).eq("id", application_id).execute()
 

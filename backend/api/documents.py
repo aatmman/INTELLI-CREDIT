@@ -37,13 +37,28 @@ async def upload_document(
         supabase = get_supabase()
         doc_id = str(uuid.uuid4())
         
+        # Verify app exists
+        app_check = supabase.table("loan_applications").select("id").eq("id", application_id).execute()
+        if not app_check.data:
+            raise HTTPException(status_code=404, detail="Application not found")
+
         # Read file content
         file_content = await file.read()
         file_size = len(file_content)
         
+        # Ensure bucket exists
+        try:
+            supabase.storage.get_bucket("documents")
+        except Exception:
+            try:
+                supabase.storage.create_bucket("documents", {"public": True})
+            except Exception:
+                pass # Bucket might exist
+
         # Upload to Supabase Storage
         storage_path = f"documents/{application_id}/{doc_id}/{file.filename}"
-        supabase.storage.from_("documents").upload(
+        
+        res = supabase.storage.from_("documents").upload(
             path=storage_path,
             file=file_content,
             file_options={"content-type": file.content_type or "application/octet-stream"}
@@ -65,7 +80,8 @@ async def upload_document(
             "financial_year": financial_year,
             "uploaded_by": user.uid,
         }
-        supabase.table("documents").insert(doc_record).execute()
+        
+        db_res = supabase.table("documents").insert(doc_record).execute()
         
         # Trigger background parsing
         background_tasks.add_task(trigger_document_parsing, doc_id, storage_path, document_type)
@@ -76,7 +92,10 @@ async def upload_document(
             data={"document_id": doc_id, "status": "uploaded"}
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"[ERROR] Document upload failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Document upload failed: {str(e)}")
 
 
@@ -104,6 +123,7 @@ async def trigger_document_parsing(doc_id: str, storage_path: str, document_type
             f.write(res)
             
         # Route to appropriate parser based on document_type
+        doc_type_lower = document_type.lower()
         if document_type in ["Balance Sheet", "Profit & Loss Statement", "Cash Flow Statement", "Audit Report"]:
             from parsers.financial_parser import parse_financial_document
             await parse_financial_document(tmp_path, app_id, document_id=doc_id)
@@ -113,12 +133,30 @@ async def trigger_document_parsing(doc_id: str, storage_path: str, document_type
             rtype = "gstr3b" if "3B" in document_type else "gstr1"
             await parse_gst_returns([{"file_path": tmp_path, "return_type": rtype, "document_id": doc_id}], app_id)
             
-        elif "Bank" in document_type or "Statement" in document_type and "Account" in document_type:
+        elif "Bank" in document_type or ("Statement" in document_type and "Account" in document_type):
             from parsers.banking_parser import parse_bank_statements
             await parse_bank_statements(tmp_path, app_id, document_id=doc_id)
             
+        elif any(k in doc_type_lower for k in ["title deed", "valuation", "encumbrance", "cersai", "insurance"]):
+            from parsers.collateral_parser import parse_collateral_document
+            c_type = "title_deed"
+            if "valuation" in doc_type_lower: c_type = "valuation_report"
+            elif "encumbrance" in doc_type_lower: c_type = "encumbrance_certificate"
+            elif "cersai" in doc_type_lower: c_type = "cersai_report"
+            elif "insurance" in doc_type_lower: c_type = "insurance_policy"
+            await parse_collateral_document(tmp_path, app_id, c_type, document_id=doc_id)
+            
+        elif any(k in doc_type_lower for k in ["shareholding", "board", "minutes", "sanction", "rating"]):
+            from parsers.miscellaneous_parser import parse_miscellaneous_document
+            m_type = "sanction_letter_existing"
+            if "shareholding" in doc_type_lower: m_type = "shareholding_pattern"
+            elif "board" in doc_type_lower or "minutes" in doc_type_lower: m_type = "board_meeting_minutes"
+            elif "rating" in doc_type_lower: m_type = "rating_report"
+            await parse_miscellaneous_document(tmp_path, app_id, m_type, document_id=doc_id)
+            
         else:
             # Maybe KYC or other parsers if needed
+            print(f"[documents API] Unhandled document type for parsing: {document_type}")
             pass
         
         # Mark as parsed
@@ -221,7 +259,7 @@ async def get_document_completeness(
         supabase = get_supabase()
         
         # Get application loan type
-        app = supabase.table("applications").select(
+        app = supabase.table("loan_applications").select(
             "loan_type"
         ).eq("id", application_id).single().execute()
         loan_type = app.data["loan_type"]

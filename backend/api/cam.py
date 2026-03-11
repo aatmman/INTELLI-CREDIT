@@ -56,9 +56,6 @@ async def generate_cam(
 async def run_cam_writer_agent(application_id: str, cam_id: str):
     """
     Background task: Run CAM writer agent.
-    TODO: Replace with actual agents/nodes/cam_writer.py call.
-    
-    The agent:
     1. Gathers all analysis data from DB
     2. Uses Groq + pgvector RAG to source every statement
     3. Generates structured CAM covering Five Cs of Credit
@@ -69,14 +66,63 @@ async def run_cam_writer_agent(application_id: str, cam_id: str):
     try:
         supabase = get_supabase()
         
-        # Stub: Mark as completed with placeholder
+        # 1. Gather Data
+        app_res = supabase.table("loan_applications").select("*").eq("id", application_id).single().execute()
+        company_name = app_res.data.get("company_name", "Unknown Company")
+        
+        fin_res = supabase.table("extracted_financials").select("*").eq("application_id", application_id).execute()
+        gst_res = supabase.table("gst_monthly_data").select("*").eq("application_id", application_id).execute()
+        bank_res = supabase.table("bank_statement_data").select("*").eq("application_id", application_id).execute()
+        risk_res = supabase.table("risk_scores").select("*").eq("application_id", application_id).execute()
+        
+        analysis_data = {
+            "loan_details": app_res.data,
+            "financials": fin_res.data,
+            "gst": gst_res.data,
+            "banking": bank_res.data,
+            "risk_score": risk_res.data[0] if risk_res.data else {}
+        }
+        
+        # 2. Call Groq
+        from services.groq_service import groq_cam_generation
+        cam_text = await groq_cam_generation(analysis_data, company_name)
+        
+        cam_content = {"sections": {"Detailed Memo": cam_text}}
+        
+        # 3. Generate Docs
+        from services.cam_generator import generate_cam_document
+        docx_bytes = generate_cam_document(application_id, cam_content, "docx")
+        pdf_bytes = generate_cam_document(application_id, cam_content, "pdf")
+        
+        # Ensure bucket exists
+        try:
+            supabase.storage.get_bucket("documents")
+        except Exception:
+            try:
+                supabase.storage.create_bucket("documents", {"public": True})
+            except Exception:
+                pass
+                
+        # 4. Upload to storage
+        docx_path = f"cam/{application_id}/{cam_id}.docx"
+        supabase.storage.from_("documents").upload(docx_path, docx_bytes)
+        docx_url = supabase.storage.from_("documents").get_public_url(docx_path)
+        
+        pdf_path = f"cam/{application_id}/{cam_id}.pdf"
+        supabase.storage.from_("documents").upload(pdf_path, pdf_bytes)
+        pdf_url = supabase.storage.from_("documents").get_public_url(pdf_path)
+        
+        # 5. Mark as completed
         supabase.table("cam_documents").update({
             "status": "completed",
             "completed_at": datetime.utcnow().isoformat(),
-            "cam_content": {"status": "pending_agent_implementation"},
+            "cam_content": cam_content,
+            "cam_docx_url": docx_url,
+            "cam_pdf_url": pdf_url,
         }).eq("id", cam_id).execute()
         
     except Exception as e:
+        print(f"[ERROR] CAM writing failed: {str(e)}")
         try:
             supabase = get_supabase()
             supabase.table("cam_documents").update({

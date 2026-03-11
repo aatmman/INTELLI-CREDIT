@@ -83,8 +83,8 @@ export default function DocumentUpload() {
   const { data: appsData, isLoading: isLoadingApps } = useApplications();
   const fallbackAppId = appsData?.data?.[0]?.id;
   
-  // Don't use the hardcoded demo ID if we don't have to, wait for real data
-  const applicationId = location.state?.applicationId || fallbackAppId || "5b62b322-26f6-498c-84d4-539c94b7c8df";
+  // Wait for real data instead of using a hardcoded ID
+  const applicationId = location.state?.applicationId || fallbackAppId || "";
 
   const uploadMutation = useUploadDocument();
   const deleteMutation = useDeleteDocument();
