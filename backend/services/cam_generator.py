@@ -103,7 +103,7 @@ def generate_sanction_letter_doc(application_id: str, format: str = "docx") -> D
     supabase = get_supabase()
 
     # Get application + decision data
-    app = supabase.table("loan_applications").select("*").eq("id", application_id).single().execute()
+    app = supabase.table("applications").select("*").eq("id", application_id).single().execute()
     decision = supabase.table("loan_decisions").select("*").eq(
         "application_id", application_id
     ).eq("action", "approve").order("created_at", desc=True).limit(1).execute()

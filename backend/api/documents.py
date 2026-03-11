@@ -221,7 +221,7 @@ async def get_document_completeness(
         supabase = get_supabase()
         
         # Get application loan type
-        app = supabase.table("loan_applications").select(
+        app = supabase.table("applications").select(
             "loan_type"
         ).eq("id", application_id).single().execute()
         loan_type = app.data["loan_type"]

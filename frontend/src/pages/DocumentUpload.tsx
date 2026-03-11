@@ -80,18 +80,28 @@ export default function DocumentUpload() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Use applicationId from navigate state, fallback to the user's latest application
-  const { data: appsData } = useApplications();
-  const fallbackAppId = appsData?.data?.[0]?.id || "5b62b322-26f6-498c-84d4-539c94b7c8df";
-  const applicationId = location.state?.applicationId || fallbackAppId;
+  const { data: appsData, isLoading: isLoadingApps } = useApplications();
+  const fallbackAppId = appsData?.data?.[0]?.id;
+  
+  // Don't use the hardcoded demo ID if we don't have to, wait for real data
+  const applicationId = location.state?.applicationId || fallbackAppId || "5b62b322-26f6-498c-84d4-539c94b7c8df";
 
   const uploadMutation = useUploadDocument();
   const deleteMutation = useDeleteDocument();
-  const { data: documentsData, isLoading } = useDocuments(applicationId);
+  
+  // Only fetch documents if we are not loading apps (to prevent 500s on bad fallback ID)
+  const { data: documentsData, isLoading: isLoadingDocs } = useDocuments(
+    applicationId, 
+    { enabled: !isLoadingApps } // Add enabled parameter if supported by useDocuments, otherwise we just handle it via isLoading
+  );
+  
+  const isLoading = isLoadingApps || isLoadingDocs;
 
   // Merge uploaded documents with the static required checklist structure
-  const uploadedDocsList = documentsData?.data || [];
+  // Cast documentsData as any to bypass TypeScript complaining 'data' doesn't exist on unknown
+  const uploadedDocsList = (documentsData as any)?.data || [];
 
-  const derivedTabsData: Record<string, DocItem[]> = {};
+  const derivedTabsData: Record<string, any[]> = {};
   for (const [tabName, requiredDocs] of Object.entries(tabsData)) {
     derivedTabsData[tabName] = requiredDocs.map(reqDoc => {
       // Find matching uploaded document

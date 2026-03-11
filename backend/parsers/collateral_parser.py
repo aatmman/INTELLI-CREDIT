@@ -327,7 +327,7 @@ def _fetch_loan_amount(application_id: str) -> Optional[float]:
         return None
     try:
         supabase = get_supabase()
-        result = supabase.table("loan_applications").select(
+        result = supabase.table("applications").select(
             "loan_amount_requested"
         ).eq("id", application_id).single().execute()
         if result.data:

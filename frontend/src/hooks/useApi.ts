@@ -72,11 +72,12 @@ export const useDeleteDocument = () => {
     });
 };
 
-export const useDocuments = (applicationId: string) =>
+export const useDocuments = (applicationId: string, options?: any) =>
     useQuery({
         queryKey: ["documents", applicationId],
         queryFn: () => documents.list(applicationId),
         enabled: !!applicationId,
+        ...options,
     });
 
 export const useDocumentStatus = (documentId: string) =>

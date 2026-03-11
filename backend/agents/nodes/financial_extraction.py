@@ -67,7 +67,7 @@ def _fetch_sector(application_id: str) -> str:
     """Get sector from applications table."""
     try:
         supabase = get_supabase()
-        result = supabase.table("loan_applications").select(
+        result = supabase.table("applications").select(
             "sector"
         ).eq("id", application_id).single().execute()
         return (result.data or {}).get("sector", "")

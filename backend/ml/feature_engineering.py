@@ -158,7 +158,7 @@ async def build_xgboost_features(application_id: str) -> Dict[str, float]:
         features["litigation_count"] = 0  # Populated from research
 
         # --- External (4) ---
-        app = supabase.table("loan_applications").select("sector").eq("id", application_id).single().execute()
+        app = supabase.table("applications").select("sector").eq("id", application_id).single().execute()
         if app.data:
             bench = supabase.table("sector_benchmarks").select("risk_weight").eq("sector", app.data["sector"]).execute()
             features["sector_risk_weight"] = float(bench.data[0]["risk_weight"]) if bench.data else 1.0
