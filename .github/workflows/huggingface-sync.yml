@@ -30,9 +30,13 @@ jobs:
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
           
-          # 1. Create a temporary local branch ('hf-deploy') that CONTAINS ONLY the 'backend' folder
-          git subtree split --prefix backend -b hf-deploy
+          # Use a shallow deploy to avoid pushing large file history to Hugging Face
+          mkdir -p /tmp/hf-deploy
+          cp -r backend/* /tmp/hf-deploy/
+          cd /tmp/hf-deploy
           
-          # 2. Force push that temporary branch directly to the 'main' branch of the Hugging Face Space
-          # IMPORTANT: If your space is named differently, update "aatmman/intelli-credit-backend" below.
-          git push https://aatmman:$HF_TOKEN@huggingface.co/spaces/aatmman/intelli-credit-backend hf-deploy:main --force
+          git init
+          git add .
+          git commit -m "Deploy from GitHub Actions"
+          
+          git push https://aatmman:$HF_TOKEN@huggingface.co/spaces/aatmman/intelli-credit-backend master:main --force
