@@ -62,6 +62,12 @@ function put<T = any>(path: string, body?: any) {
     });
 }
 
+function del<T = any>(path: string) {
+    return request<T>(path, {
+        method: "DELETE",
+    });
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PRE-QUALIFICATION (Stage 0)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -98,6 +104,7 @@ export const documents = {
     getCompleteness: (applicationId: string) => get(`/api/documents/${applicationId}/completeness`),
     verify: (data: any) => patch("/api/documents/verify", data),
     getChecklist: (loanType: string) => get(`/api/documents/checklist/${loanType}`),
+    delete: (documentId: string) => del(`/api/documents/${documentId}`),
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -20,7 +20,7 @@ try:
     
     if "documents" not in bucket_names:
         print("Creating 'documents' bucket...")
-        supabase.storage.create_bucket("documents", {"public": True})
+        supabase.storage.create_bucket("documents")
         print("Bucket 'documents' created successfully!")
     else:
         print("Bucket 'documents' already exists.")

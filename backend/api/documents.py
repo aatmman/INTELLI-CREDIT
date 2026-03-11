@@ -145,6 +145,38 @@ async def get_document_status(
         raise HTTPException(status_code=404, detail="Document not found")
 
 
+@router.delete("/{document_id}", response_model=APIResponse)
+async def delete_document(
+    document_id: str,
+    user: UserContext = Depends(get_current_user),
+):
+    """Delete a document from storage and database."""
+    try:
+        supabase = get_supabase()
+        
+        # 1. Get document details to find the storage path
+        doc_result = supabase.table("documents").select(
+            "application_id, file_name"
+        ).eq("id", document_id).single().execute()
+        
+        if not doc_result.data:
+            raise HTTPException(status_code=404, detail="Document not found")
+            
+        app_id = doc_result.data["application_id"]
+        file_name = doc_result.data["file_name"]
+        
+        # 2. Delete from storage (documents/application_id/document_id/filename)
+        storage_path = f"documents/{app_id}/{document_id}/{file_name}"
+        supabase.storage.from_("documents").remove([storage_path])
+        
+        # 3. Delete from database
+        supabase.table("documents").delete().eq("id", document_id).execute()
+        
+        return APIResponse(success=True, message="Document deleted successfully")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/{application_id}/completeness", response_model=APIResponse)
 async def get_document_completeness(
     application_id: str,

@@ -64,6 +64,14 @@ export const useUploadDocument = () => {
     });
 };
 
+export const useDeleteDocument = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (documentId: string) => documents.delete(documentId),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["documents"] }),
+    });
+};
+
 export const useDocuments = (applicationId: string) =>
     useQuery({
         queryKey: ["documents", applicationId],

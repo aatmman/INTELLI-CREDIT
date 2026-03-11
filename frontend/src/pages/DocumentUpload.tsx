@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth, getRoleLabel } from "@/lib/auth";
-import { useUploadDocument, useDocuments, useDocumentChecklist } from "@/hooks/useApi";
+import { useUploadDocument, useDocuments, useDeleteDocument, useDocumentChecklist } from "@/hooks/useApi";
 import { FileText, BarChart3, Upload, Trash2, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
@@ -15,10 +15,11 @@ const NAV = [
 interface DocItem {
   name: string;
   desc?: string;
-  status: "uploaded" | "processing" | "empty";
   extracted?: string;
   warning?: string;
   fileName?: string;
+  id?: string;
+  fileUrl?: string;
 }
 
 const tabsData: Record<string, DocItem[]> = {
@@ -82,6 +83,7 @@ export default function DocumentUpload() {
   const applicationId = location.state?.applicationId || "5b62b322-26f6-498c-84d4-539c94b7c8df";
 
   const uploadMutation = useUploadDocument();
+  const deleteMutation = useDeleteDocument();
   const { data: documentsData, isLoading } = useDocuments(applicationId);
 
   // Merge uploaded documents with the static required checklist structure
@@ -99,6 +101,8 @@ export default function DocumentUpload() {
           status: uploadedMatch.status === "parsed" || uploadedMatch.status === "verified" ? "uploaded" : "processing",
           extracted: uploadedMatch.status === "parsed" ? "Data Extracted ✅" : undefined,
           fileName: uploadedMatch.file_name,
+          id: uploadedMatch.id,
+          fileUrl: uploadedMatch.file_url,
         };
       }
       return { ...reqDoc, status: "empty" } as DocItem;
@@ -139,6 +143,29 @@ export default function DocumentUpload() {
         setUploadingDocType(null);
       }
     });
+  };
+
+  const handleView = (doc: DocItem) => {
+    if (doc.fileUrl) {
+      window.open(doc.fileUrl, "_blank");
+    } else {
+      toast.error("File URL not found");
+    }
+  };
+
+  const handleDelete = (doc: DocItem) => {
+    if (!doc.id) return;
+    if (window.confirm(`Are you sure you want to delete ${doc.name}?`)) {
+      const toastId = toast.loading(`Deleting ${doc.name}...`);
+      deleteMutation.mutate(doc.id, {
+        onSuccess: () => {
+          toast.success(`${doc.name} deleted successfully`, { id: toastId });
+        },
+        onError: () => {
+          toast.error(`Failed to delete ${doc.name}`, { id: toastId });
+        }
+      });
+    }
   };
 
   return (
@@ -233,8 +260,8 @@ export default function DocumentUpload() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="btn-ghost h-7 px-3 text-xs">View</button>
-                    <button className="w-7 h-7 rounded-[3px] border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors">
+                    <button onClick={() => handleView(doc)} className="btn-ghost h-7 px-3 text-xs">View</button>
+                    <button onClick={() => handleDelete(doc)} className="w-7 h-7 rounded-[3px] border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>

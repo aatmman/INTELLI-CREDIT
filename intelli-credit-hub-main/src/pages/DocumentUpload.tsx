@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth, getRoleLabel } from "@/lib/auth";
-import { useUploadDocument } from "@/hooks/useApi";
+import { useUploadDocument, useDocuments, useDeleteDocument } from "@/hooks/useApi";
 import { FileText, BarChart3, Upload, Trash2, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -18,6 +18,8 @@ interface DocItem {
   extracted?: string;
   warning?: string;
   fileName?: string;
+  id?: string;
+  fileUrl?: string;
 }
 
 const tabsData: Record<string, DocItem[]> = {
@@ -77,9 +79,11 @@ export default function DocumentUpload() {
   const docs = tabsData[activeTab];
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadDocument();
-
+  const deleteMutation = useDeleteDocument();
   // Use applicationId from navigate state, fallback to demo placeholder
   const applicationId = location.state?.applicationId || "5b62b322-26f6-498c-84d4-539c94b7c8df";
+
+  const { data: documentsData, isLoading } = useDocuments(applicationId);
 
   const totalDocs = Object.values(tabsData).flat().length;
   const uploadedDocs = Object.values(tabsData).flat().filter(d => d.status === "uploaded" || d.status === "processing").length;
@@ -87,6 +91,29 @@ export default function DocumentUpload() {
 
   const handleUpload = async (_docName: string) => {
     fileInputRef.current?.click();
+  };
+
+  const handleView = (doc: DocItem) => {
+    if (doc.fileUrl) {
+      window.open(doc.fileUrl, "_blank");
+    } else {
+      // Use standard alert if toast is not imported in this file
+      alert("File URL not found");
+    }
+  };
+
+  const handleDelete = (doc: DocItem) => {
+    if (!doc.id) return;
+    if (window.confirm(`Are you sure you want to delete ${doc.name}?`)) {
+      deleteMutation.mutate(doc.id, {
+        onSuccess: () => {
+          // Success action
+        },
+        onError: () => {
+          alert(`Failed to delete ${doc.name}`);
+        }
+      });
+    }
   };
 
   return (
@@ -172,8 +199,8 @@ export default function DocumentUpload() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="btn-ghost h-7 px-3 text-xs">View</button>
-                    <button className="w-7 h-7 rounded-[3px] border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors">
+                    <button onClick={() => handleView(doc)} className="btn-ghost h-7 px-3 text-xs">View</button>
+                    <button onClick={() => handleDelete(doc)} className="w-7 h-7 rounded-[3px] border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
