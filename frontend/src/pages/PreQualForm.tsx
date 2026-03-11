@@ -60,7 +60,7 @@ export default function PreQualForm() {
 
   /* ── Result screen ── */
   if (result && !result.error) {
-    const tier = result.eligibility_tier || "UNKNOWN";
+    const tier = result.eligibility_tier?.toUpperCase() || "UNKNOWN";
     const score = result.score || 0;
     const isEligible = tier === "ELIGIBLE";
     const isBorderline = tier === "BORDERLINE";
@@ -88,7 +88,7 @@ export default function PreQualForm() {
             </h2>
             <p className="text-muted-foreground text-sm" style={{ letterSpacing: "-0.01em" }}>
               Pre-qualification score:{" "}
-              <span className="font-mono font-bold text-foreground">{(score * 100).toFixed(0)}%</span>
+              <span className="font-mono font-bold text-foreground">{score.toFixed(0)}%</span>
             </p>
           </div>
 
@@ -106,7 +106,7 @@ export default function PreQualForm() {
           )}
 
           {(isEligible || isBorderline) && result.application_id ? (
-            <button onClick={() => navigate("/borrower/apply")} className="btn-primary w-full gap-2">
+            <button onClick={() => navigate("/borrower/apply", { state: { applicationId: result.application_id } })} className="btn-primary w-full gap-2">
               Continue to Document Upload <ArrowRight className="w-4 h-4" />
             </button>
           ) : (

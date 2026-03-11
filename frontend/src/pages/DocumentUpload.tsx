@@ -3,7 +3,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth, getRoleLabel } from "@/lib/auth";
 import { useUploadDocument, useDocuments, useDocumentChecklist } from "@/hooks/useApi";
 import { FileText, BarChart3, Upload, Trash2, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 const NAV = [
@@ -74,12 +74,12 @@ export default function DocumentUpload() {
   const [activeTab, setActiveTab] = useState("Financials");
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { userName, role } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Application ID placeholder for the UI demo since there's no URL param
-  // Must be a valid UUID for Supabase backend
-  const applicationId = "5b62b322-26f6-498c-84d4-539c94b7c8df";
+  // Use applicationId from navigate state, fallback to demo placeholder
+  const applicationId = location.state?.applicationId || "5b62b322-26f6-498c-84d4-539c94b7c8df";
 
   const uploadMutation = useUploadDocument();
   const { data: documentsData, isLoading } = useDocuments(applicationId);
@@ -119,10 +119,6 @@ export default function DocumentUpload() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !uploadingDocType) return;
-
-    // Application ID placeholder for the UI demo since there's no URL param
-    // Must be a valid UUID for Supabase backend
-    const applicationId = "5b62b322-26f6-498c-84d4-539c94b7c8df";
 
     const formData = new FormData();
     formData.append("file", file);

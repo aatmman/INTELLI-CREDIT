@@ -3,7 +3,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth, getRoleLabel } from "@/lib/auth";
 import { useUploadDocument } from "@/hooks/useApi";
 import { FileText, BarChart3, Upload, Trash2, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const NAV = [
   { label: "Dashboard", path: "/borrower" },
@@ -73,9 +73,13 @@ export default function DocumentUpload() {
   const [activeTab, setActiveTab] = useState("Financials");
   const navigate = useNavigate();
   const { userName, role } = useAuth();
+  const location = useLocation();
   const docs = tabsData[activeTab];
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadDocument();
+
+  // Use applicationId from navigate state, fallback to demo placeholder
+  const applicationId = location.state?.applicationId || "5b62b322-26f6-498c-84d4-539c94b7c8df";
 
   const totalDocs = Object.values(tabsData).flat().length;
   const uploadedDocs = Object.values(tabsData).flat().filter(d => d.status === "uploaded" || d.status === "processing").length;
