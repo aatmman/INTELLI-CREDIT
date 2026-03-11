@@ -1,0 +1,38 @@
+name: Sync Backend to Hugging Face Hub
+
+on:
+  push:
+    branches: 
+      - master
+      - main
+    # Only trigger when files in the backend change
+    paths:
+      - 'backend/**'
+      - '.github/workflows/huggingface-sync.yml'
+  
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # To fetch all history for all branches and tags
+          lfs: true
+      
+      - name: Push backend folder to Hugging Face Spaces
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          
+          # 1. Create a temporary local branch ('hf-deploy') that CONTAINS ONLY the 'backend' folder
+          git subtree split --prefix backend -b hf-deploy
+          
+          # 2. Force push that temporary branch directly to the 'main' branch of the Hugging Face Space
+          # IMPORTANT: If your space is named differently, update "aatmman/intelli-credit-backend" below.
+          git push https://aatmman:$HF_TOKEN@huggingface.co/spaces/aatmman/intelli-credit-backend hf-deploy:main --force
