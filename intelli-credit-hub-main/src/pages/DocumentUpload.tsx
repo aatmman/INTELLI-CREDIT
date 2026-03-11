@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth, getRoleLabel } from "@/lib/auth";
-import { useUploadDocument, useDocuments, useDeleteDocument } from "@/hooks/useApi";
+import { useUploadDocument, useDocuments, useDeleteDocument, useApplications } from "@/hooks/useApi";
 import { FileText, BarChart3, Upload, Trash2, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -80,8 +80,10 @@ export default function DocumentUpload() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadDocument();
   const deleteMutation = useDeleteDocument();
-  // Use applicationId from navigate state, fallback to demo placeholder
-  const applicationId = location.state?.applicationId || "5b62b322-26f6-498c-84d4-539c94b7c8df";
+  // Use applicationId from navigate state, fallback to recent app
+  const { data: appsData } = useApplications();
+  const fallbackAppId = appsData?.data?.[0]?.id || "5b62b322-26f6-498c-84d4-539c94b7c8df";
+  const applicationId = location.state?.applicationId || fallbackAppId;
 
   const { data: documentsData, isLoading } = useDocuments(applicationId);
 

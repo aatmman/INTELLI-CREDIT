@@ -14,6 +14,8 @@ from services.supabase_client import get_supabase
 from typing import List, Optional
 import uuid
 from datetime import datetime
+import os
+import tempfile
 
 router = APIRouter(prefix="/api/documents", tags=["Documents"])
 
@@ -80,6 +82,7 @@ async def upload_document(
 
 async def trigger_document_parsing(doc_id: str, storage_path: str, document_type: str):
     """Background task: Parse uploaded document using appropriate parser."""
+    tmp_path = None
     try:
         supabase = get_supabase()
         
@@ -88,18 +91,46 @@ async def trigger_document_parsing(doc_id: str, storage_path: str, document_type
             "status": DocumentStatus.PARSING.value
         }).eq("id", doc_id).execute()
         
-        # TODO: Route to appropriate parser based on document_type
-        # - Financial statements -> docling_parser (table extraction)
-        # - GST returns -> gst_parser
-        # - Bank statements -> pymupdf_parser
-        # - Scanned docs -> easyocr_parser
+        # Get application_id
+        doc_record = supabase.table("documents").select("application_id").eq("id", doc_id).single().execute().data
+        if not doc_record:
+            raise Exception("Document record not found")
+        app_id = doc_record["application_id"]
         
-        # For now, mark as parsed (stub)
+        # Download file to temp location
+        res = supabase.storage.from_("documents").download(storage_path)
+        tmp_path = os.path.join(tempfile.gettempdir(), f"{doc_id}.pdf")
+        with open(tmp_path, "wb") as f:
+            f.write(res)
+            
+        # Route to appropriate parser based on document_type
+        if document_type in ["Balance Sheet", "Profit & Loss Statement", "Cash Flow Statement", "Audit Report"]:
+            from parsers.financial_parser import parse_financial_document
+            await parse_financial_document(tmp_path, app_id, document_id=doc_id)
+            
+        elif "GSTR" in document_type:
+            from parsers.gst_parser import parse_gst_returns
+            rtype = "gstr3b" if "3B" in document_type else "gstr1"
+            await parse_gst_returns([{"file_path": tmp_path, "return_type": rtype, "document_id": doc_id}], app_id)
+            
+        elif "Bank" in document_type or "Statement" in document_type and "Account" in document_type:
+            from parsers.banking_parser import parse_bank_statements
+            await parse_bank_statements(tmp_path, app_id, document_id=doc_id)
+            
+        else:
+            # Maybe KYC or other parsers if needed
+            pass
+        
+        # Mark as parsed
         supabase.table("documents").update({
             "status": DocumentStatus.PARSED.value,
             "parsed_at": datetime.utcnow().isoformat(),
         }).eq("id", doc_id).execute()
         
+        # Clean up temp file
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
+            
     except Exception as e:
         try:
             supabase = get_supabase()
@@ -109,6 +140,9 @@ async def trigger_document_parsing(doc_id: str, storage_path: str, document_type
             }).eq("id", doc_id).execute()
         except Exception:
             pass
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.remove(tmp_path)
 
 
 @router.get("/{application_id}", response_model=APIResponse)
