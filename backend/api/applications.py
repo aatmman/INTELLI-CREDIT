@@ -40,7 +40,7 @@ async def create_application(request: ApplicationCreate, user: UserContext = Dep
             "current_stage": ApplicationStage.DOCUMENT_UPLOAD.value,
             "is_active": True,
         }
-        supabase.table("applications").insert(record).execute()
+        supabase.table("loan_applications").insert(record).execute()
         return APIResponse(success=True, message="Application created", data={"application_id": app_id})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -56,7 +56,7 @@ async def list_applications(
     """List applications (filtered by role and optional stage)."""
     try:
         supabase = get_supabase()
-        query = supabase.table("applications").select("*", count="exact")
+        query = supabase.table("loan_applications").select("*", count="exact")
 
         # Role-based filtering
         if user.role == "borrower":
@@ -92,7 +92,7 @@ async def get_application(application_id: str, user: UserContext = Depends(get_c
     """Get full application details."""
     try:
         supabase = get_supabase()
-        result = supabase.table("applications").select("*").eq("id", application_id).single().execute()
+        result = supabase.table("loan_applications").select("*").eq("id", application_id).single().execute()
         return APIResponse(success=True, data=result.data)
     except Exception as e:
         raise HTTPException(status_code=404, detail="Application not found")
@@ -107,7 +107,7 @@ async def update_application(
         supabase = get_supabase()
         update_data = {k: v for k, v in request.model_dump().items() if v is not None}
         update_data["updated_at"] = datetime.utcnow().isoformat()
-        supabase.table("applications").update(update_data).eq("id", application_id).execute()
+        supabase.table("loan_applications").update(update_data).eq("id", application_id).execute()
         return APIResponse(success=True, message="Application updated")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -120,7 +120,7 @@ async def transition_stage(
     """Move application to next stage."""
     try:
         supabase = get_supabase()
-        app = supabase.table("applications").select("current_stage, stage_history").eq("id", application_id).single().execute()
+        app = supabase.table("loan_applications").select("current_stage, stage_history").eq("id", application_id).single().execute()
         history = app.data.get("stage_history") or []
         history.append({
             "from_stage": app.data["current_stage"],
@@ -129,7 +129,7 @@ async def transition_stage(
             "remarks": request.remarks,
             "timestamp": datetime.utcnow().isoformat(),
         })
-        supabase.table("applications").update({
+        supabase.table("loan_applications").update({
             "current_stage": request.target_stage.value,
             "stage_history": history,
             "updated_at": datetime.utcnow().isoformat(),

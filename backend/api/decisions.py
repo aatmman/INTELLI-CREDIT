@@ -55,7 +55,7 @@ async def submit_decision(
             DecisionAction.RETURN_FOR_DD: ApplicationStage.FIELD_VISIT.value,
         }
         new_stage = stage_map.get(request.action, ApplicationStage.POST_SANCTION.value)
-        supabase.table("applications").update({
+        supabase.table("loan_applications").update({
             "current_stage": new_stage,
         }).eq("id", application_id).execute()
 
@@ -105,7 +105,7 @@ async def get_decision_pack(application_id: str, user: UserContext = Depends(get
     """Get one-screen Decision Pack for Sanctioning Authority (PRD Section 6, Portal 5)."""
     try:
         supabase = get_supabase()
-        app = supabase.table("applications").select("*").eq("id", application_id).single().execute()
+        app = supabase.table("loan_applications").select("*").eq("id", application_id).single().execute()
         risk = supabase.table("risk_scores").select("*").eq("application_id", application_id).execute()
         cam = supabase.table("cam_documents").select("id, cam_docx_url").eq("application_id", application_id).order("created_at", desc=True).limit(1).execute()
         decisions = supabase.table("loan_decisions").select("*").eq("application_id", application_id).eq("decided_by_role", "credit_manager").order("created_at", desc=True).limit(1).execute()

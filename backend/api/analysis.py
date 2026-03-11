@@ -35,7 +35,7 @@ async def get_financial_analysis(
         ).order("financial_year", desc=False).execute()
         
         # Get sector benchmarks for comparison
-        app = supabase.table("applications").select("sector").eq(
+        app = supabase.table("loan_applications").select("sector").eq(
             "id", application_id
         ).single().execute()
         

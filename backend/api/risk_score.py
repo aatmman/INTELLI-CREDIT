@@ -43,7 +43,7 @@ async def compute_risk_score(
             "scored_at": datetime.utcnow().isoformat(),
         }
         supabase.table("risk_scores").upsert(score_record, on_conflict="application_id").execute()
-        supabase.table("applications").update({
+        supabase.table("loan_applications").update({
             "final_risk_grade": result.risk_grade.value if result.risk_grade else None,
         }).eq("id", application_id).execute()
 

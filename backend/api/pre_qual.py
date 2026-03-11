@@ -121,7 +121,7 @@ async def create_application_record(
     """Background task: create loan application in Supabase."""
     try:
         supabase = get_supabase()
-        supabase.table("applications").insert({
+        supabase.table("loan_applications").insert({
             "id": app_id,
             "company_name": request.company_name,
             "cin_number": request.cin_number,
